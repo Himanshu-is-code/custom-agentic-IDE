@@ -1,0 +1,53 @@
+{
+  "name": "opengravity",
+  "displayName": "OpenGravity",
+  "description": "OpenGravity agentic AI bridge — connects the IDE chat to the local OpenGravity orchestrator engine.",
+  "version": "0.0.1",
+  "publisher": "opengravity",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": ["Other"],
+  "extensionKind": ["ui", "workspace"],
+  "main": "./dist/node/extension.js",
+  "browser": "./dist/browser/extension.js",
+  "enabledApiProposals": [
+    "chatProvider",
+    "languageModelSystem"
+  ],
+  "contributes": {
+    "chatParticipants": [
+      {
+        "id": "opengravity.default",
+        "name": "opengravity",
+        "description": "OpenGravity local assistant",
+        "isDefault": true,
+        "modes": [
+          "ask",
+          "agent",
+          "edit"
+        ]
+      }
+    ],
+    "languageModelChatProviders": [
+      {
+        "vendor": "customendpoint",
+        "name": "OpenGravity"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "npm-run-all2 -lp bundle-web bundle-node",
+    "compile-web": "npm-run-all2 -lp bundle-web",
+    "bundle-web": "npx tsx ./esbuild.browser.mts",
+    "bundle-node": "npx tsx ./esbuild.node.mts",
+    "watch-web": "npx tsx ./esbuild.browser.mts --watch",
+    "watch-node": "npx tsx ./esbuild.node.mts --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0",
+    "npm-run-all2": "^6.2.0",
+    "tsx": "^4.7.0"
+  }
+}
