@@ -5,22 +5,6 @@ This document maps the entire process of installing dependencies, patching upstr
 ---
 
 ## 🛠️ Stage-by-Step Technical Breakdown
-
-### Stage 1: Local Compiler & MSVC Setup
-* **Objective**: Compile native C++ dependencies for Electron 42.3.0 without exhausting space on the primary partition (C: drive).
-* **The "Why"**: The C: partition had low storage capacity. Microsoft's full Visual Studio Build Tools with C++ compilation libraries require 6-10 GB.
-* **Action**: Installed Visual Studio Build Tools 2022 to the `D:` drive. We had to pass custom arguments to redirect the install destination, shared libs, and package caches:
-  ```powershell
-  Start-Process -FilePath "$env:TEMP\vs_buildtools.exe" -ArgumentList `
-    "--installPath `"D:\Microsoft Visual Studio\2022\BuildTools`"", `
-    "--path shared=`"D:\Microsoft Visual Studio\Shared`"", `
-    "--path cache=`"D:\Microsoft Visual Studio\Cache`"", `
-    "--add Microsoft.VisualStudio.Workload.VCTools", `
-    "--add Microsoft.VisualStudio.Component.VC.Runtimes.x86.x64.Spectre", `
-    "--includeRecommended", `--passive`, `--wait` -Wait
-  ```
-  *Note: Deployed the Spectre-mitigated runtime component since VS Code's `native-keymap` configuration enforces Spectre mitigations (`/Qspectre`).*
-
 ---
 
 ### Stage 2: Installation Lifecycle Script Patches
