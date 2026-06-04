@@ -1,4 +1,4 @@
-# VS Code Custom Workbench & OpenGravity Build Journey (Interview Guide)
+# VS Code Custom Workbench & OpenGravity Build 
 
 This document maps the entire process of installing dependencies, patching upstream build scripts, resolving compiler & MIME type errors, and launching the custom VS Code Electron IDE with OpenGravity.
 
