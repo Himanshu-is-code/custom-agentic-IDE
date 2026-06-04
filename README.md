@@ -4,32 +4,6 @@ This document maps the entire process of installing dependencies, patching upstr
 
 ---
 
-## 📅 The Chronicles: Chronological Timeline
-
-```mermaid
-gantt
-    title Custom VS Code Build & Integration Timeline
-    dateFormat  YYYY-MM-DD
-    section Phase 1: Env & Tools
-    MSVC Setup (D: Drive)            :active, p1, 2026-06-01, 1d
-    MSVC Toolchain Env Setup         :active, p2, 2026-06-01, 1d
-    section Phase 2: Dependency Fixes
-    preinstall.ts Execution Patch    :active, p3, 2026-06-02, 1d
-    postinstall.ts Git Exception Wrappers :active, p4, 2026-06-02, 1d
-    section Phase 3: Copilot & Extension Kind
-    glob Named Import ESM Fix       :active, p5, 2026-06-03, 1d
-    package.json extensionKind Fix   :active, p6, 2026-06-03, 1d
-    section Phase 4: Compilation
-    Gulp Build Pipeline              :active, p7, 2026-06-04, 1d
-    section Phase 5: Debug & Launch
-    MIME Type Error Resolution       :active, p8, 2026-06-04, 1d
-    Successful Workbench Launch     :active, p9, 2026-06-04, 1d
-    section Phase 6: Terminal Fix
-    ConPTY Missing DLL Resolution    :active, p10, 2026-06-04, 1d
-```
-
----
-
 ## 🛠️ Stage-by-Step Technical Breakdown
 
 ### Stage 1: Local Compiler & MSVC Setup
