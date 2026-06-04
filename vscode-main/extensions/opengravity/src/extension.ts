@@ -192,13 +192,24 @@ function registerOpenGravityParticipant(context: vscode.ExtensionContext): void 
 export function activate(context: vscode.ExtensionContext): void {
 	const provider = new OpenGravityModelProvider();
 
-	const disposable = vscode.lm.registerLanguageModelChatProvider(
-		OPENGRAVITY_VENDOR,
-		provider
-	);
+	try {
+		const disposable = vscode.lm.registerLanguageModelChatProvider(
+			OPENGRAVITY_VENDOR,
+			provider
+		);
+		context.subscriptions.push(disposable);
+		console.log('[OpenGravity] Language model provider registered successfully.');
+	} catch (e) {
+		console.error('[OpenGravity] Failed to register language model provider (perhaps already registered):', e);
+	}
 
-	context.subscriptions.push(disposable);
-	registerOpenGravityParticipant(context);
+	try {
+		registerOpenGravityParticipant(context);
+		console.log('[OpenGravity] Chat participant registered successfully.');
+	} catch (e) {
+		console.error('[OpenGravity] Failed to register chat participant:', e);
+	}
+
 	console.log('[OpenGravity] Extension activated — routing chat to', OPENGRAVITY_API_BASE);
 }
 

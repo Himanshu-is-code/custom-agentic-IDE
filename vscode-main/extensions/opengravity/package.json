@@ -33,7 +33,7 @@
     "languageModelChatProviders": [
       {
         "vendor": "customendpoint",
-        "name": "OpenGravity"
+        "displayName": "OpenGravity"
       }
     ]
   },

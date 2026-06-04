@@ -9,10 +9,10 @@
   },
   "scripts": {
     "build": "tsc",
-    "dev": "tsx watch src/index.ts",
-    "start": "node dist/index.js",
+    "dev": "tsx watch src/cli.ts serve",
+    "start": "node dist/cli.js serve",
     "cli": "tsx src/cli.ts",
-    "server": "tsx src/server.ts",
+    "server": "tsx src/cli.ts serve",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint src/",
