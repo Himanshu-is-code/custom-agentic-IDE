@@ -8,10 +8,10 @@ This document maps the entire process of installing dependencies, patching upstr
 
 To start development or test the integration, run the following components in separate terminal windows:
 
-### 1. Start the Backend Orchestrator (`newcore`)
-Navigate to the `newcore` directory and start the local AI orchestrator:
+### 1. Start the Backend Orchestrator (`backend`)
+Navigate to the `backend` directory and start the local AI orchestrator:
 ```powershell
-cd d:\open-antigravity-main\newcore
+cd d:\open-antigravity-main\backend
 npm run dev
 ```
 *(This spawns the API server on port `3777` using the `mock` model engine, so no external LLM API keys are required.)*
@@ -25,19 +25,19 @@ $env:VSCODE_DEV = "1"
 $env:VSCODE_CLI = "1"
 
 # Launch the Electron binary
-& "D:\open-antigravity-main\vscode-main\.build\electron\Code - OSS.exe" "D:\open-antigravity-main\vscode-main"
+& "D:\open-antigravity-main\editor\.build\electron\Code - OSS.exe" "D:\open-antigravity-main\editor"
 ```
 
 ### 3. Compilation & Watching (Optional)
 If you make changes to the VS Code client code, run:
 * **Recompile Client**:
   ```powershell
-  cd d:\open-antigravity-main\vscode-main
+  cd d:\open-antigravity-main\editor
   npm run compile
   ```
 * **Run Watch Mode**:
   ```powershell
-  cd d:\open-antigravity-main\vscode-main
+  cd d:\open-antigravity-main\editor
   npm run watch
   ```
 
@@ -50,8 +50,8 @@ If you make changes to the VS Code client code, run:
 To bypass environment checks that crash the setup lifecycle outside the official repository CI, we patched two lifecycle scripts:
 
 #### 1. `build/npm/preinstall.ts`
-* **File Directory**: `vscode-main/build/npm/preinstall.ts`
-* **Path**: [preinstall.ts](file:///d:/open-antigravity-main/vscode-main/build/npm/preinstall.ts)
+* **File Directory**: `editor/build/npm/preinstall.ts`
+* **Path**: [preinstall.ts](file:///d:/open-antigravity-main/editor/build/npm/preinstall.ts)
 * **The "Why"**: The preinstall check invokes npm commands during Electron header builds. Under certain npm configurations, `process.env.npm_command` resolves to `'exec'`, leading to infinite recursion (`npm exec` nested loops) that hangs the install process.
 * **Code Change**:
 ```diff
@@ -60,8 +60,8 @@ To bypass environment checks that crash the setup lifecycle outside the official
 ```
 
 #### 2. `build/npm/postinstall.ts`
-* **File Directory**: `vscode-main/build/npm/postinstall.ts`
-* **Path**: [postinstall.ts](file:///d:/open-antigravity-main/vscode-main/build/npm/postinstall.ts)
+* **File Directory**: `editor/build/npm/postinstall.ts`
+* **Path**: [postinstall.ts](file:///d:/open-antigravity-main/editor/build/npm/postinstall.ts)
 * **The "Why"**: The upstream repository runs global `git config` operations during `postinstall`. Because our workspace is parsed outside a git clone metadata directory (no `.git` folder exists), `git config` throws a fatal execution exception and crashes the dependency script.
 * **Code Change**:
 ```diff
@@ -74,8 +74,8 @@ To bypass environment checks that crash the setup lifecycle outside the official
 ---
 
 ### Stage 3: Copilot ESM Compilation Fix
-* **File Directory**: `vscode-main/extensions/copilot/.esbuild.mts`
-* **Path**: [.esbuild.mts](file:///d:/open-antigravity-main/vscode-main/extensions/copilot/.esbuild.mts)
+* **File Directory**: `editor/extensions/copilot/.esbuild.mts`
+* **Path**: [.esbuild.mts](file:///d:/open-antigravity-main/editor/extensions/copilot/.esbuild.mts)
 * **The "Why"**: Under Node 22/24's strict ES Module (ESM) resolution engine, default imports from a CommonJS module that doesn't expose a default export throw `ERR_UNKNOWN_FILE_EXTENSION` or module linkage errors during the esbuild process. The `glob` library is standard CommonJS with named exports only.
 * **Code Change**:
 ```diff
@@ -86,17 +86,17 @@ To bypass environment checks that crash the setup lifecycle outside the official
 ---
 
 ### Stage 4: OpenGravity Extension Desktop Integration
-* **File Directory**: `vscode-main/extensions/opengravity/package.json`
-* **Path**: [package.json](file:///d:/open-antigravity-main/vscode-main/extensions/opengravity/package.json)
+* **File Directory**: `editor/extensions/opengravity/package.json`
+* **Path**: [package.json](file:///d:/open-antigravity-main/editor/extensions/opengravity/package.json)
 * **The "Why"**: The OpenGravity integration was configured only for `"web"` runtimes (`extensionKind: ["web"]`). When launching a native desktop Electron process, VS Code ignores any extensions that do not state support for local environments, meaning the extension remained unparsed.
 * **Code Change**:
 ```diff
  {
    "name": "opengravity",
    ...
--  "extensionKind": ["web"],
-+  "extensionKind": ["ui", "workspace"],
-+  "main": "./dist/node/extension.js",
+ -  "extensionKind": ["web"],
+ +  "extensionKind": ["ui", "workspace"],
+ +  "main": "./dist/node/extension.js",
    "browser": "./dist/browser/extension.js",
    ...
  }
@@ -125,7 +125,7 @@ To bypass environment checks that crash the setup lifecycle outside the official
   ```
 * **Command**:
   ```powershell
-  & "D:\open-antigravity-main\vscode-main\.build\electron\Code - OSS.exe" "D:\open-antigravity-main\vscode-main" --disable-extension=vscode.vscode-api-tests
+  & "D:\open-antigravity-main\editor\.build\electron\Code - OSS.exe" "D:\open-antigravity-main\editor" --disable-extension=vscode.vscode-api-tests
   ```
 
 ---
@@ -142,11 +142,11 @@ To bypass environment checks that crash the setup lifecycle outside the official
 In interviews, if they ask **how** the IDE integrates with OpenGravity and **which folders** are used, you can explain it using this structure:
 
 ### 1. Key Folders Involved
-* **`vscode-main/extensions/opengravity/`**: The root directory for the bridge extension.
-* **`vscode-main/extensions/opengravity/src/`**: Contains the TypeScript source code of the extension.
+* **`editor/extensions/opengravity/`**: The root directory for the bridge extension.
+* **`editor/extensions/opengravity/src/`**: Contains the TypeScript source code of the extension.
   - Registers the participant using `vscode.chat.createChatParticipant`.
   - Connects to the local OpenGravity agent orchestrator (running on a local port or custom SSE endpoint) to forward user prompts and stream back response tokens in real-time.
-* **`vscode-main/extensions/opengravity/dist/`**: The output directory for compiled code.
+* **`editor/extensions/opengravity/dist/`**: The output directory for compiled code.
   - **`dist/node/extension.js`**: Native desktop entry point loaded by Electron.
   - **`dist/browser/extension.js`**: Web entry point loaded in browser/web sessions.
 
@@ -165,8 +165,7 @@ The integration occurs at the **VS Code Extension Host** layer using proposed pl
 
 ---
 
-## 💬 Interview Quick-Reference: The "Why" Cheat Sheet
-
+## 💬 Interview Reference Cheat Sheet
 
 | Question | Technical Core ("The Why") |
 |---|---|
