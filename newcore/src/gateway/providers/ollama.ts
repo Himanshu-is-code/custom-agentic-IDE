@@ -8,19 +8,42 @@ import type {
 
 export class OllamaProvider implements ModelProvider {
   readonly name = 'ollama';
-  readonly models: ModelInfo[] = [
-    { id: 'llama3', provider: 'ollama', name: 'Llama 3 (Local)', contextWindow: 8_192, maxOutputTokens: 4_096, supportsTools: false, supportsStreaming: true, costPerInputToken: 0, costPerOutputToken: 0 },
-    { id: 'codellama', provider: 'ollama', name: 'Code Llama (Local)', contextWindow: 16_384, maxOutputTokens: 4_096, supportsTools: false, supportsStreaming: true, costPerInputToken: 0, costPerOutputToken: 0 },
-    { id: 'deepseek-coder', provider: 'ollama', name: 'DeepSeek Coder (Local)', contextWindow: 16_384, maxOutputTokens: 4_096, supportsTools: false, supportsStreaming: true, costPerInputToken: 0, costPerOutputToken: 0 },
-  ];
+  models: ModelInfo[] = [];
   private baseUrl: string;
   constructor(baseUrl: string) { this.baseUrl = baseUrl.replace(/\/$/, ''); }
 
   async isAvailable(): Promise<boolean> {
     try {
       const resp = await fetch(`${this.baseUrl}/api/tags`, { signal: AbortSignal.timeout(2000) });
-      return resp.ok;
-    } catch { return false; }
+      if (resp.ok) {
+        const data = await resp.json() as { models?: Array<{ name: string; details?: { context_length?: number }; capabilities?: string[] }> };
+        const rawModels = data.models ?? [];
+        this.models = rawModels.map(m => {
+          const name = m.name;
+          const parts = name.split(':');
+          const baseName = parts[0].charAt(0).toUpperCase() + parts[0].slice(1);
+          const tag = parts[1] ? `:${parts[1]}` : '';
+          const displayName = `${baseName}${tag} (Local)`;
+          return {
+            id: name,
+            provider: 'ollama',
+            name: displayName,
+            contextWindow: m.details?.context_length ?? 8192,
+            maxOutputTokens: 4096,
+            supportsTools: m.capabilities?.includes('tools') || false,
+            supportsStreaming: true,
+            costPerInputToken: 0,
+            costPerOutputToken: 0,
+          };
+        });
+        return true;
+      }
+      this.models = [];
+      return false;
+    } catch {
+      this.models = [];
+      return false;
+    }
   }
 
   async complete(request: CompletionRequest): Promise<CompletionResponse> {

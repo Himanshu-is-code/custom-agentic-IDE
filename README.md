@@ -4,6 +4,45 @@ This document maps the entire process of installing dependencies, patching upstr
 
 ---
 
+## ⚡ Quick Start: How to Run the Project
+
+To start development or test the integration, run the following components in separate terminal windows:
+
+### 1. Start the Backend Orchestrator (`newcore`)
+Navigate to the `newcore` directory and start the local AI orchestrator:
+```powershell
+cd d:\open-antigravity-main\newcore
+npm run dev
+```
+*(This spawns the API server on port `3777` using the `mock` model engine, so no external LLM API keys are required.)*
+
+### 2. Launch the Custom VS Code Electron IDE
+Set the development environment variables and run the Electron binary:
+```powershell
+# Set dev flags so CSS import maps and dev tools load correctly
+$env:NODE_ENV = "development"
+$env:VSCODE_DEV = "1"
+$env:VSCODE_CLI = "1"
+
+# Launch the Electron binary
+& "D:\open-antigravity-main\vscode-main\.build\electron\Code - OSS.exe" "D:\open-antigravity-main\vscode-main"
+```
+
+### 3. Compilation & Watching (Optional)
+If you make changes to the VS Code client code, run:
+* **Recompile Client**:
+  ```powershell
+  cd d:\open-antigravity-main\vscode-main
+  npm run compile
+  ```
+* **Run Watch Mode**:
+  ```powershell
+  cd d:\open-antigravity-main\vscode-main
+  npm run watch
+  ```
+
+---
+
 ## 🛠️ Stage-by-Step Technical Breakdown
 ---
 

@@ -7,7 +7,7 @@
 import * as vscode from 'vscode';
 
 // ─── Configuration ────────────────────────────────────────────────────────────
-const OPENGRAVITY_VENDOR = 'customendpoint';
+const OPENGRAVITY_VENDOR = 'opengravity';
 const OPENGRAVITY_API_BASE = 'http://127.0.0.1:3777/v1';
 const DEFAULT_MODEL_ID = 'opengravity-default';
 
@@ -49,34 +49,44 @@ class OpenGravityModelProvider implements vscode.LanguageModelChatProvider {
 		_token: vscode.CancellationToken
 	): Promise<vscode.LanguageModelChatInformation[]> {
 		// Fetch available models from our backend
-		let models: { id: string; name?: string }[] = [];
+		let models: { id: string; name: string; contextWindow: number; maxOutputTokens: number }[] = [];
 		try {
-			const res = await fetch(`${OPENGRAVITY_API_BASE}/models`, { signal: AbortSignal.timeout(3000) });
+			const rootUrl = OPENGRAVITY_API_BASE.replace(/\/v1$/, '');
+			const res = await fetch(`${rootUrl}/models`, { signal: AbortSignal.timeout(3000) });
 			if (res.ok) {
-				const json = await res.json() as { data?: Array<{ id: string }>; models?: Array<{ id: string }> };
-				const raw = json.data ?? json.models ?? [];
-				models = raw.map(m => ({ id: m.id ?? DEFAULT_MODEL_ID }));
+				const json = await res.json() as { models?: Array<{ id: string; name?: string; contextWindow?: number; maxOutputTokens?: number }> };
+				const raw = json.models ?? [];
+				models = raw.map(m => ({
+					id: m.id,
+					name: m.name ?? m.id,
+					contextWindow: m.contextWindow ?? 128000,
+					maxOutputTokens: m.maxOutputTokens ?? 4096
+				}));
 			}
 		} catch {
 			// Backend unreachable — expose a placeholder so the user sees something
 		}
 
 		if (models.length === 0) {
-			models = [{ id: DEFAULT_MODEL_ID, name: 'OpenGravity (Local)' }];
+			models = [{ id: DEFAULT_MODEL_ID, name: 'OpenGravity (Local)', contextWindow: 128000, maxOutputTokens: 4096 }];
 		}
 
-		return models.map(m => ({
-			id: m.id,
-			name: m.name ?? m.id,
-			family: 'opengravity',
-			version: '1.0',
-			maxInputTokens: 128000,
-			maxOutputTokens: 4096,
-			capabilities: {
-				imageInput: false,
-				toolCalling: true,
-			}
-		}));
+		return models.map(m => {
+			const displayName = m.id === DEFAULT_MODEL_ID ? m.name : `OpenGravity - ${m.name}`;
+			return {
+				id: m.id,
+				name: displayName,
+				family: 'opengravity',
+				version: '1.0',
+				maxInputTokens: m.contextWindow,
+				maxOutputTokens: m.maxOutputTokens,
+				statusIcon: new vscode.ThemeIcon('sparkle'),
+				capabilities: {
+					imageInput: false,
+					toolCalling: true,
+				}
+			} as vscode.LanguageModelChatInformation;
+		});
 	}
 
 	async provideLanguageModelChatResponse(

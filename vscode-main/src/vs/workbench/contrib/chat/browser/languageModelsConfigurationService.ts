@@ -103,9 +103,9 @@ export class LanguageModelsConfigurationService extends Disposable implements IL
 
 	getLanguageModelsProviderGroups(): readonly ILanguageModelsProviderGroup[] {
 		const groups = [...this.languageModelsProviderGroups];
-		if (!groups.some(g => g.vendor === 'customendpoint')) {
+		if (!groups.some(g => g.vendor === 'opengravity')) {
 			groups.push({
-				vendor: 'customendpoint',
+				vendor: 'opengravity',
 				name: 'OpenGravity',
 				url: 'http://127.0.0.1:3777/v1'
 			} as any);

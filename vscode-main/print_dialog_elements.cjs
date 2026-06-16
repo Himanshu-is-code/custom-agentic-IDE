@@ -1,0 +1,29 @@
+const { chromium } = require('playwright');
+
+async function run() {
+  const browser = await chromium.connectOverCDP('http://127.0.0.1:9222');
+  const context = browser.contexts()[0];
+  const page = context.pages().find(p => p.url().includes('workbench-dev.html'));
+  if (!page) {
+    console.error('Workbench page not found!');
+    await browser.close();
+    return;
+  }
+
+  const html = await page.evaluate(() => {
+    const list = [];
+    document.querySelectorAll('.monaco-dialog-box, .dialog-container, [role="dialog"], .monaco-button').forEach(el => {
+      list.push({
+        className: el.className,
+        text: el.textContent?.trim() || '',
+        html: el.outerHTML.slice(0, 300)
+      });
+    });
+    return list;
+  });
+  console.log(JSON.stringify(html, null, 2));
+
+  await browser.close();
+}
+
+run().catch(console.error);

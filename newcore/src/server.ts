@@ -32,14 +32,14 @@ export async function startServer(orchestrator?: AgentOrchestrator) {
 
   // ── Models ──
   app.get('/models', async () => {
-    const models = engine.getGateway().getAvailableModels();
+    const models = await engine.getGateway().getAvailableModels();
     const providers = await engine.getGateway().getAvailableProviders();
     return { providers, models };
   });
 
   // ── OpenAI-compatible /v1/models ──
   app.get('/v1/models', async () => {
-    const models = engine.getGateway().getAvailableModels();
+    const models = await engine.getGateway().getAvailableModels();
     return {
       object: 'list',
       data: models.map(m => ({

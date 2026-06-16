@@ -57,7 +57,14 @@ export class ModelGateway {
     }
   }
 
-  getAvailableModels(): ModelInfo[] {
+  async getAvailableModels(): Promise<ModelInfo[]> {
+    for (const provider of this.providers.values()) {
+      try {
+        await provider.isAvailable();
+      } catch {
+        // Ignore errors checking provider availability
+      }
+    }
     const models: ModelInfo[] = [];
     for (const provider of this.providers.values()) {
       models.push(...provider.models);
@@ -80,6 +87,13 @@ export class ModelGateway {
   }
 
   resolveModel(modelSpec: string): { provider: string; model: string } {
+    // Check if it's a known model id first (to handle model IDs with colons like 'qwen2.5:0.5b')
+    for (const [name, provider] of this.providers) {
+      if (provider.models.some(m => m.id === modelSpec)) {
+        return { provider: name, model: modelSpec };
+      }
+    }
+
     // Format: "provider:model" or just "model" or just "provider"
     if (modelSpec.includes(':')) {
       const [provider, model] = modelSpec.split(':', 2);
@@ -90,12 +104,6 @@ export class ModelGateway {
     if (this.providers.has(modelSpec)) {
       const provider = this.providers.get(modelSpec)!;
       return { provider: modelSpec, model: provider.models[0]?.id ?? modelSpec };
-    }
-
-    // Check if it's a model id
-    const providerName = this.modelToProvider.get(modelSpec);
-    if (providerName) {
-      return { provider: providerName, model: modelSpec };
     }
 
     // Default
