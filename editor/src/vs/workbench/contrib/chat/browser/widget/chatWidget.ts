@@ -255,9 +255,6 @@ export class ChatWidget extends Disposable implements IChatWidget {
 
 	contribs: ReadonlyArray<IChatWidgetContrib> = [];
 
-	private timelineNavContainer: HTMLElement | undefined;
-	private timelineTrack: HTMLElement | undefined;
-	private timelineProgress: HTMLElement | undefined;
 	private timelineDotsContainer: HTMLElement | undefined;
 	private readonly timelineDisposables = this._register(new MutableDisposable<DisposableStore>());
 
@@ -2997,15 +2994,17 @@ export class ChatWidget extends Disposable implements IChatWidget {
 	}
 
 	private initTimelineNavigation(container: HTMLElement): void {
-		this.timelineNavContainer = dom.$('.chat-timeline-navigation', { style: 'display: none' });
-		// Insert before the chat list container to display at the top of the chat panel
-		container.insertBefore(this.timelineNavContainer, this.listContainer);
-
-		this.timelineDotsContainer = dom.append(this.timelineNavContainer, dom.$('.chat-timeline-dots'));
+		this.timelineDotsContainer = dom.append(this.listContainer, dom.$('.chat-timeline-pill-nav'));
 		
-		const trackContainer = dom.append(this.timelineDotsContainer, dom.$('.chat-timeline-track-container'));
-		this.timelineTrack = dom.append(trackContainer, dom.$('.chat-timeline-track'));
-		this.timelineProgress = dom.append(trackContainer, dom.$('.chat-timeline-progress'));
+		// Create 3 dots in collapsed indicator
+		const collapsedIndicator = dom.append(this.timelineDotsContainer, dom.$('.chat-timeline-collapsed-indicator'));
+		dom.append(collapsedIndicator, dom.$('.chat-timeline-collapsed-dot'));
+		dom.append(collapsedIndicator, dom.$('.chat-timeline-collapsed-dot'));
+		dom.append(collapsedIndicator, dom.$('.chat-timeline-collapsed-dot'));
+
+		// Create expanded compartment
+		const expandedCompartment = dom.append(this.timelineDotsContainer, dom.$('.chat-timeline-expanded-compartment'));
+		dom.append(expandedCompartment, dom.$('.chat-timeline-vertical-track'));
 
 		// Handle scrolling to sync active timeline items
 		this._register(this.onDidScroll(() => {
@@ -3014,12 +3013,12 @@ export class ChatWidget extends Disposable implements IChatWidget {
 	}
 
 	private updateTimelineNavigation(): void {
-		if (!this.timelineNavContainer || !this.timelineDotsContainer) {
+		if (!this.timelineDotsContainer) {
 			return;
 		}
 
 		if (!this._visible || !this.viewModel) {
-			this.timelineNavContainer.style.display = 'none';
+			this.timelineDotsContainer.style.display = 'none';
 			return;
 		}
 
@@ -3027,36 +3026,46 @@ export class ChatWidget extends Disposable implements IChatWidget {
 		const requests = items.filter(isRequestVM);
 
 		if (requests.length === 0) {
-			this.timelineNavContainer.style.display = 'none';
+			this.timelineDotsContainer.style.display = 'none';
 			return;
 		}
 
-		this.timelineNavContainer.style.display = 'flex';
+		this.timelineDotsContainer.style.display = 'flex';
 
 		// Clear previous transient listeners
 		this.timelineDisposables.value = new DisposableStore();
 
-		// Remove only the dot elements from the container
-		const existingDots = this.timelineDotsContainer.querySelectorAll('.chat-timeline-dot');
-		existingDots.forEach(dot => dot.remove());
+		// Find the expanded compartment
+		const expandedCompartment = this.timelineDotsContainer.querySelector('.chat-timeline-expanded-compartment') as HTMLElement;
+		if (expandedCompartment) {
+			// Remove all previous dots (excluding the track line)
+			const track = expandedCompartment.querySelector('.chat-timeline-vertical-track');
+			dom.clearNode(expandedCompartment);
+			if (track) {
+				expandedCompartment.appendChild(track);
+			}
 
-		requests.forEach((req, idx) => {
-			const dot = dom.append(this.timelineDotsContainer!, dom.$('.chat-timeline-dot'));
-			dot.dataset.index = String(idx);
-			dot.title = req.messageText;
+			requests.forEach((req, idx) => {
+				const dot = dom.append(expandedCompartment, dom.$('.chat-timeline-dot'));
+				dot.title = req.messageText;
 
-			this.timelineDisposables.value!.add(dom.addDisposableListener(dot, dom.EventType.CLICK, (e) => {
-				e.stopPropagation();
-				this.reveal(req);
-				this.updateActiveTimelineItem(idx);
-			}));
-		});
+				// Position vertically inside the expanded compartment
+				const topPercent = requests.length > 1 ? (idx / (requests.length - 1)) * 100 : 50;
+				dot.style.top = `calc(${topPercent}% - 3px)`; // width of dot is 6px, offset is 3px
+
+				this.timelineDisposables.value!.add(dom.addDisposableListener(dot, dom.EventType.CLICK, (e) => {
+					e.stopPropagation();
+					this.reveal(req);
+					this.updateActiveTimelineItem(idx);
+				}));
+			});
+		}
 
 		this.updateActiveTimelineItem();
 	}
 
 	private updateActiveTimelineItem(forcedIndex?: number): void {
-		if (!this.timelineNavContainer || !this.timelineDotsContainer) {
+		if (!this.timelineDotsContainer) {
 			return;
 		}
 
@@ -3099,28 +3108,10 @@ export class ChatWidget extends Disposable implements IChatWidget {
 			}
 		}
 
-		// Update active class on dots
-		const dots = this.timelineDotsContainer.querySelectorAll('.chat-timeline-dot');
+		const dots = Array.from(this.timelineDotsContainer.querySelectorAll('.chat-timeline-dot'));
 		dots.forEach((dot, idx) => {
-			const isActive = idx === activeIndex;
-			dot.classList.toggle('active', isActive);
-			if (isActive) {
-				// Smoothly scroll the timeline container horizontally to keep the active dot visible
-				dot.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-			}
+			dot.classList.toggle('active', idx === activeIndex);
 		});
-
-		// Calculate progress fill percentage
-		let progressPercent = 0;
-		if (requests.length > 1) {
-			progressPercent = (activeIndex / (requests.length - 1)) * 100;
-		} else if (requests.length === 1) {
-			progressPercent = 100;
-		}
-
-		if (this.timelineProgress) {
-			this.timelineProgress.style.width = `${progressPercent}%`;
-		}
 	}
 
 	delegateScrollFromMouseWheelEvent(browserEvent: IMouseWheelEvent): void {

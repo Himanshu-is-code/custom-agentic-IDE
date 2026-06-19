@@ -4255,94 +4255,121 @@ have to be updated for changes to the rules above, or to support more deeply nes
 	font-size: 11px;
 }
 
-/* --- Chat Timeline Navigation (Horizontal DeepSeek-style) --- */
-.chat-timeline-navigation {
-	position: relative;
-	width: 100%;
-	height: 32px;
-	background: var(--vscode-editorWidget-background, rgba(30, 30, 30, 0.85));
-	border-bottom: 1px solid var(--vscode-widget-border, rgba(255, 255, 255, 0.08));
+/* --- Expandable Side Pill Chat Timeline --- */
+.chat-timeline-pill-nav {
+	position: absolute;
+	right: 16px;
+	top: 50%;
+	transform: translateY(-50%);
+	width: 14px;
+	height: 36px;
+	border-radius: 8px;
+	background: rgba(30, 30, 30, 0.45);
+	border: 1px solid var(--vscode-widget-border, rgba(255, 255, 255, 0.08));
+	backdrop-filter: blur(6px);
 	box-sizing: border-box;
 	display: flex;
+	flex-direction: column;
 	align-items: center;
-	padding: 0 16px;
-	overflow-x: auto;
-	overflow-y: hidden;
-	scrollbar-width: none; /* Firefox */
-	z-index: 10;
-	user-select: none;
-	font-family: var(--vscode-font-family, system-ui, -apple-system, sans-serif);
+	justify-content: center;
+	z-index: 100;
+	pointer-events: auto;
+	cursor: pointer;
+	overflow: hidden;
+	transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+				width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+				background-color 0.2s,
+				border-color 0.2s,
+				box-shadow 0.3s;
 }
 
-.chat-timeline-navigation::-webkit-scrollbar {
-	display: none; /* Chrome/Safari */
+.chat-timeline-pill-nav:hover {
+	width: 20px;
+	height: 160px;
+	border-radius: 10px;
+	background: var(--vscode-editorWidget-background, rgba(30, 30, 30, 0.9));
+	border-color: var(--vscode-widget-border, rgba(255, 255, 255, 0.15));
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
-.chat-timeline-dots {
-	position: relative;
+.chat-timeline-collapsed-indicator {
 	display: flex;
+	flex-direction: column;
 	align-items: center;
-	justify-content: space-between;
+	justify-content: space-around;
+	height: 20px;
 	width: 100%;
-	height: 100%;
-	min-width: max-content;
-	gap: 32px; /* Ensure spacing when scrolling horizontally */
+	opacity: 1;
+	transition: opacity 0.2s ease;
 }
 
-.chat-timeline-track-container {
-	position: absolute;
-	left: 16px;
-	right: 16px;
-	top: 0;
-	bottom: 0;
+.chat-timeline-pill-nav:hover .chat-timeline-collapsed-indicator {
+	opacity: 0;
 	pointer-events: none;
-	z-index: 1;
 }
 
-/* Track Line */
-.chat-timeline-track {
+.chat-timeline-collapsed-dot {
+	width: 3px;
+	height: 3px;
+	border-radius: 50%;
+	background-color: var(--vscode-descriptionForeground, rgba(255, 255, 255, 0.45));
+}
+
+.chat-timeline-expanded-compartment {
 	position: absolute;
-	top: 50%;
+	top: 12px;
+	bottom: 12px;
 	left: 0;
 	right: 0;
-	height: 2px;
-	background-color: var(--vscode-widget-border, rgba(255, 255, 255, 0.15));
-	transform: translateY(-50%);
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	opacity: 0;
+	pointer-events: none;
+	transition: opacity 0.2s ease 0.1s;
 }
 
-/* Progress Fill Line */
-.chat-timeline-progress {
+.chat-timeline-pill-nav:hover .chat-timeline-expanded-compartment {
+	opacity: 1;
+	pointer-events: auto;
+}
+
+.chat-timeline-vertical-track {
 	position: absolute;
-	top: 50%;
-	left: 0;
-	height: 2px;
-	background-color: var(--vscode-progressBar-background, #007acc);
-	transform: translateY(-50%);
-	width: 0%;
-	transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+	top: 4px;
+	bottom: 4px;
+	left: 9px;
+	width: 2px;
+	background-color: var(--vscode-widget-border, rgba(255, 255, 255, 0.12));
+	border-radius: 1px;
+	opacity: 0.5;
 }
 
-/* Interactive Dot Node */
 .chat-timeline-dot {
-	width: 8px;
-	height: 8px;
+	position: absolute;
+	width: 6px;
+	height: 6px;
 	border-radius: 50%;
 	background-color: var(--vscode-descriptionForeground, rgba(255, 255, 255, 0.35));
 	cursor: pointer;
-	z-index: 3;
-	transition: transform 0.2s, background-color 0.2s, box-shadow 0.2s;
+	z-index: 101;
+	transform: translateX(-0.5px);
+	pointer-events: auto;
+	transition: transform 0.15s ease, background-color 0.15s, box-shadow 0.15s;
+	border: 1px solid var(--vscode-editorWidget-background, #1e1e1e);
+	box-sizing: content-box;
 }
 
 .chat-timeline-dot:hover {
 	background-color: var(--vscode-progressBar-background, #007acc);
-	transform: scale(1.4);
+	transform: scale(1.4) translateX(-0.5px);
 	box-shadow: 0 0 6px var(--vscode-progressBar-background, #007acc);
 }
 
 .chat-timeline-dot.active {
-	width: 12px;
-	height: 12px;
 	background-color: var(--vscode-progressBar-background, #007acc);
+	border-color: var(--vscode-progressBar-background, #007acc);
 	box-shadow: 0 0 8px var(--vscode-progressBar-background, #007acc);
-	transform: none; /* Keep its size */
+	transform: scale(1.3) translateX(-0.5px);
 }
+
